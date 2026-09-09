@@ -82,11 +82,15 @@
     margin-top:2px;
   }
   .today-amount span{font-size:19px; color:var(--cream-soft); margin-right:4px; font-weight:500;}
-  .nudge{
+  .nudge-btn{
     margin-top:10px; font-size:12.5px; color:var(--gold);
     display:none; align-items:center; gap:6px;
+    background:var(--bg-raised-2); border:1px dashed var(--gold);
+    border-radius:10px; padding:9px 12px; width:100%;
+    font-family:'Noto Sans TC'; font-weight:600; cursor:pointer; text-align:left;
   }
-  .nudge.show{display:flex;}
+  .nudge-btn.show{display:flex;}
+  .nudge-btn:active{background:var(--bg-raised);}
 
   /* ---------- Budget row ---------- */
   .budget-row{margin-top:14px;}
@@ -121,6 +125,30 @@
   }
   .type-toggle button.active.expense{background:var(--stamp-red); color:#F3EEE2;}
   .type-toggle button.active.income{background:var(--ledger-green); color:#F3EEE2;}
+
+  .date-row{display:flex; align-items:center; gap:6px; margin-bottom:8px;}
+  .date-chips{display:flex; gap:5px; flex:1;}
+  .date-chip{
+    flex:1; border:1px solid var(--paper-line); background:transparent; border-radius:8px;
+    padding:6px 0; font-family:'Noto Sans TC'; font-size:11.5px; font-weight:600; color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .date-chip.active{background:var(--ink); color:var(--paper); border-color:var(--ink);}
+  .date-input{
+    border:1px solid var(--paper-line); background:var(--paper-2); border-radius:8px;
+    padding:5px 6px; font-size:11.5px; font-family:'IBM Plex Mono',monospace; color:var(--ink);
+    width:118px;
+  }
+  .date-note{
+    display:none; align-items:center; flex-wrap:wrap; gap:6px;
+    font-size:11.5px; color:var(--stamp-red); background:#EFE2D8; border-radius:8px;
+    padding:7px 10px; margin-bottom:12px;
+  }
+  .date-note.show{display:flex;}
+  .date-note-link{
+    border:none; background:var(--ink); color:var(--paper); font-size:10.5px; font-weight:700;
+    padding:3px 8px; border-radius:100px; cursor:pointer; font-family:'Noto Sans TC';
+  }
 
   .amount-display{
     display:flex; align-items:baseline; justify-content:flex-end;
@@ -185,6 +213,7 @@
   .row .amt{font-family:'IBM Plex Mono',monospace; font-size:15px; font-weight:600;}
   .row .amt.expense{color:var(--stamp-red);}
   .row .amt.income{color:var(--ledger-green);}
+  .row .amt.checkin{color:var(--gold); font-size:16px;}
   .row .del{
     border:none; background:transparent; color:var(--ink-soft); font-size:11px;
     padding:2px 6px; cursor:pointer; margin-left:6px; text-decoration:underline;
@@ -214,6 +243,18 @@
   .stat-card.income .v{color:var(--ledger-green);}
 
   .sec-title{font-size:12px; font-weight:700; color:var(--ink-soft); letter-spacing:.04em; margin:0 0 10px;}
+
+  .badge-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:24px;}
+  .badge-cell{
+    background:var(--paper-2); border-radius:12px; padding:11px 4px 8px;
+    display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center;
+    transition:opacity .2s;
+  }
+  .badge-cell .ic{font-size:22px;}
+  .badge-cell .lb{font-size:10px; font-weight:700; color:var(--ink); line-height:1.3;}
+  .badge-cell.locked{opacity:.32;}
+  .badge-cell.locked .ic{filter:grayscale(100%);}
+  .badge-cell.locked .lb{color:var(--ink-soft);}
 
   .week-chart{display:flex; align-items:flex-end; gap:8px; height:90px; margin-bottom:24px; padding:0 2px;}
   .week-bar{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%;}
@@ -302,7 +343,7 @@
     </div>
     <div class="today-label">今日支出</div>
     <div class="today-amount"><span>NT$</span><span id="todayExpense">0</span></div>
-    <div class="nudge" id="nudge">👋 今天還沒記錄，記一筆延續連續紀錄！</div>
+    <button class="nudge-btn" id="nudgeBtn" onclick="logCheckin(todayKey())">🌱 今天還沒花錢？點此打卡延續紀錄</button>
 
     <div class="budget-row">
       <div class="budget-top">
@@ -318,6 +359,16 @@
       <button class="active expense" id="typeExpense" onclick="setType('expense')">支出</button>
       <button class="income" id="typeIncome" onclick="setType('income')">收入</button>
     </div>
+
+    <div class="date-row">
+      <div class="date-chips">
+        <button class="date-chip active" onclick="setEntryDate(0)">今天</button>
+        <button class="date-chip" onclick="setEntryDate(1)">昨天</button>
+        <button class="date-chip" onclick="setEntryDate(2)">前天</button>
+      </div>
+      <input type="date" id="customDateInput" class="date-input" onchange="setEntryDateCustom(this.value)">
+    </div>
+    <div class="date-note" id="dateNote"></div>
 
     <div class="amount-display" id="amountDisplay">
       <div class="cur">NT$</div>
@@ -340,6 +391,9 @@
   </div>
 
   <div class="stats-view" id="statsView">
+    <div class="sec-title">🏅 成就徽章</div>
+    <div class="badge-grid" id="badgeGrid"></div>
+
     <div class="month-switch">
       <button id="prevMonthBtn" onclick="changeMonth(-1)">‹</button>
       <div class="lb" id="monthLabel">2026年9月</div>
@@ -402,14 +456,32 @@ const INCOME_CATS = [
 ];
 const CAT_LOOKUP = {};
 [...EXPENSE_CATS, ...INCOME_CATS].forEach(c => CAT_LOOKUP[c.k] = c);
+CAT_LOOKUP['checkin'] = {k:'checkin', ic:'🌱', lb:'無消費打卡'};
 const OTHER_KEYS = ['other_e', 'other_i'];
+
+const BADGES = [
+  {id:'first_entry', ic:'📝', lb:'記帳新手', check:s=>s.totalEntries>=1},
+  {id:'entries_10', ic:'📝', lb:'10筆紀錄', check:s=>s.totalEntries>=10},
+  {id:'entries_50', ic:'📝', lb:'50筆紀錄', check:s=>s.totalEntries>=50},
+  {id:'entries_100', ic:'📝', lb:'100筆紀錄', check:s=>s.totalEntries>=100},
+  {id:'streak_3', ic:'🔥', lb:'3天連續', check:s=>s.streak>=3},
+  {id:'streak_7', ic:'🔥', lb:'7天連續', check:s=>s.streak>=7},
+  {id:'streak_30', ic:'🔥', lb:'30天連續', check:s=>s.streak>=30},
+  {id:'streak_100', ic:'🔥', lb:'百日達人', check:s=>s.streak>=100},
+  {id:'nospend_5', ic:'🌱', lb:'5次無消費', check:s=>s.noSpendCount>=5},
+  {id:'nospend_20', ic:'🌱', lb:'20次無消費', check:s=>s.noSpendCount>=20},
+  {id:'nospend_50', ic:'🌱', lb:'50次無消費', check:s=>s.noSpendCount>=50},
+  {id:'nospend_100', ic:'🌱', lb:'100次無消費', check:s=>s.noSpendCount>=100},
+];
 
 let state = {
   entries: [],
   amountStr: '',
   type: 'expense',
   budget: null,          // {amount}
+  badges: {},             // {badgeId: unlockedTimestamp}
   statsMonthOffset: 0,   // 0 = current month, -1 = previous month, etc.
+  entryDateKey: null,     // date the next logged entry will be filed under (yyyy-mm-dd); set in init()
   modal: {mode:null, catKey:null},
 };
 
@@ -427,6 +499,16 @@ function monthKeyForOffset(offset){
   d.setDate(1);
   d.setMonth(d.getMonth() + offset);
   return {key:`${d.getFullYear()}-${pad(d.getMonth()+1)}`, date:d};
+}
+function dateKeyOffset(daysAgo){
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  return dateKey(d.getTime());
+}
+function tsForDateKey(dateKeyStr){
+  const now = new Date();
+  const [y,m,d] = dateKeyStr.split('-').map(Number);
+  return new Date(y, m-1, d, now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds()).getTime();
 }
 
 /* ---------- Storage layer ----------
@@ -481,7 +563,15 @@ async function init(){
   }catch(e){
     state.budget = null;
   }
+  try{
+    const bd = await storageGet('badges');
+    state.badges = bd && bd.value ? JSON.parse(bd.value) : {};
+  }catch(e){
+    state.badges = {};
+  }
   document.getElementById('dateLine').textContent = new Date().toLocaleDateString('zh-TW', {year:'numeric', month:'long', day:'numeric', weekday:'long'});
+  state.entryDateKey = todayKey();
+  document.getElementById('customDateInput').max = todayKey();
   renderCatGrid();
   renderAll();
   document.getElementById('loading').style.display = 'none';
@@ -494,6 +584,9 @@ async function persistEntries(){
 async function persistBudget(){
   const ok = await storageSet('budget', JSON.stringify(state.budget));
   if(!ok) showToast('預算儲存失敗');
+}
+async function persistBadges(){
+  await storageSet('badges', JSON.stringify(state.badges));
 }
 
 function showToast(msg){
@@ -559,6 +652,7 @@ function finalizeEntry(catKey, note){
   const amount = parseFloat(state.amountStr);
   if(!amount || amount <= 0) return;
 
+  const entryTs = tsForDateKey(state.entryDateKey);
   const monthKey = monthKeyForOffset(0).key;
   const prevMonthExpense = state.entries
     .filter(e => e.type === 'expense' && dateKey(e.ts).startsWith(monthKey))
@@ -570,14 +664,16 @@ function finalizeEntry(catKey, note){
     type: state.type,
     category: catKey,
     note: note || '',
-    ts: Date.now(),
+    ts: entryTs,
   };
-  state.entries.unshift(entry);
+  state.entries.push(entry);
+  state.entries.sort((a,b) => b.ts - a.ts);
   state.amountStr = '';
   document.getElementById('amountVal').textContent = '0';
   persistEntries();
 
-  if(entry.type === 'expense' && state.budget && state.budget.amount > 0){
+  // Only count toward this month's budget if the entry actually falls in the current month
+  if(entry.type === 'expense' && state.budget && state.budget.amount > 0 && dateKey(entryTs).startsWith(monthKey)){
     const newTotal = prevMonthExpense + amount;
     checkBudgetToast(prevMonthExpense, newTotal, state.budget.amount);
   }
@@ -613,6 +709,105 @@ function computeStreak(entries){
   return streak;
 }
 
+function logCheckin(dateKeyStr){
+  const already = state.entries.some(e => dateKey(e.ts) === dateKeyStr);
+  if(already){
+    showToast('這天已經有紀錄了');
+    return;
+  }
+  const entry = {
+    id: Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    amount: 0,
+    type: 'checkin',
+    category: 'checkin',
+    note: '',
+    ts: tsForDateKey(dateKeyStr),
+  };
+  state.entries.push(entry);
+  state.entries.sort((a,b) => b.ts - a.ts);
+  persistEntries();
+  renderAll();
+  showToast(dateKeyStr === todayKey() ? '已打卡，連續紀錄 +1 🌱' : '已補打卡 🌱');
+}
+
+function setEntryDate(daysAgo){
+  state.entryDateKey = dateKeyOffset(daysAgo);
+  renderDateRow();
+}
+function setEntryDateCustom(val){
+  if(!val) return;
+  if(val > todayKey()) val = todayKey(); // no future dates
+  state.entryDateKey = val;
+  renderDateRow();
+}
+function renderDateRow(){
+  const todayK = todayKey();
+  const chips = document.querySelectorAll('.date-chip');
+  const offsets = [0, 1, 2];
+  chips.forEach((btn, i) => {
+    btn.classList.toggle('active', state.entryDateKey === dateKeyOffset(offsets[i]));
+  });
+  const input = document.getElementById('customDateInput');
+  if(input) input.value = state.entryDateKey;
+
+  const note = document.getElementById('dateNote');
+  if(!note) return;
+  if(state.entryDateKey === todayK){
+    note.classList.remove('show');
+    note.innerHTML = '';
+  }else{
+    const d = new Date(state.entryDateKey + 'T00:00:00');
+    const label = `${d.getMonth()+1}/${d.getDate()}（${['日','一','二','三','四','五','六'][d.getDay()]}）`;
+    const hasEntry = state.entries.some(e => dateKey(e.ts) === state.entryDateKey);
+    note.classList.add('show');
+    note.innerHTML = `📅 正在為 ${label} 補記` +
+      ` <button class="date-note-link" onclick="setEntryDate(0)">回到今天</button>` +
+      (hasEntry ? '' : ` <button class="date-note-link" onclick="logCheckin('${state.entryDateKey}')">這天沒花錢，補打卡</button>`);
+  }
+}
+
+function computeUserStats(entries){
+  return {
+    streak: computeStreak(entries),
+    totalEntries: entries.filter(e => e.type === 'expense' || e.type === 'income').length,
+    noSpendCount: entries.filter(e => e.type === 'checkin').length,
+  };
+}
+
+function checkAndUnlockBadges(){
+  const stats = computeUserStats(state.entries);
+  const newly = [];
+  BADGES.forEach(b => {
+    if(!state.badges[b.id] && b.check(stats)){
+      state.badges[b.id] = Date.now();
+      newly.push(b);
+    }
+  });
+  if(newly.length){
+    persistBadges();
+    if(newly.length === 1){
+      showToast(`🎉 解鎖成就：${newly[0].ic} ${newly[0].lb}`);
+    }else{
+      showToast(`🎉 一次解鎖 ${newly.length} 個新成就！`);
+    }
+  }
+  renderBadgeGrid();
+}
+
+function renderBadgeGrid(){
+  const grid = document.getElementById('badgeGrid');
+  if(!grid) return;
+  grid.innerHTML = BADGES.map(b => {
+    const unlocked = !!state.badges[b.id];
+    return `
+      <div class="badge-cell ${unlocked ? '' : 'locked'}">
+        <div class="ic">${b.ic}</div>
+        <div class="lb">${b.lb}</div>
+      </div>
+    `;
+  }).join('');
+}
+
 function renderAll(){
   const tKey = todayKey();
   const todayEntries = state.entries.filter(e => dateKey(e.ts) === tKey);
@@ -621,7 +816,7 @@ function renderAll(){
 
   const streak = computeStreak(state.entries);
   document.getElementById('streakNum').textContent = streak;
-  document.getElementById('nudge').classList.toggle('show', !todayEntries.length);
+  document.getElementById('nudgeBtn').classList.toggle('show', !todayEntries.length);
 
   renderBudgetBar();
 
@@ -633,7 +828,9 @@ function renderAll(){
       const c = CAT_LOOKUP[e.category];
       const d = new Date(e.ts);
       const timeStr = `${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-      const sign = e.type === 'expense' ? '-' : '+';
+      const isCheckin = e.type === 'checkin';
+      const sign = e.type === 'expense' ? '-' : (e.type === 'income' ? '+' : '');
+      const amtDisplay = isCheckin ? '✓' : `${sign}${fmt(e.amount)}`;
       const label = e.note ? e.note : c.lb;
       return `
         <div class="row">
@@ -645,7 +842,7 @@ function renderAll(){
             </div>
           </div>
           <div style="display:flex; align-items:center;">
-            <div class="amt ${e.type}">${sign}${fmt(e.amount)}</div>
+            <div class="amt ${e.type}">${amtDisplay}</div>
             <button class="del" onclick="deleteEntry('${e.id}')">刪除</button>
           </div>
         </div>
@@ -653,6 +850,8 @@ function renderAll(){
     }).join('');
   }
 
+  checkAndUnlockBadges();
+  renderDateRow();
   renderStats();
 }
 
@@ -816,7 +1015,7 @@ function buildCSV(){
     const d = new Date(e.ts);
     const dateStr = `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())}`;
     const timeStr = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    const typeStr = e.type === 'expense' ? '支出' : '收入';
+    const typeStr = e.type === 'expense' ? '支出' : (e.type === 'income' ? '收入' : '打卡');
     return [dateStr, timeStr, typeStr, c.lb, e.amount, e.note || ''].map(csvEscape).join(',');
   }).join('\n');
   const csvText = '\uFEFF' + header + rows;
