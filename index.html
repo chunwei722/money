@@ -61,27 +61,47 @@
 
   /* ---------- Header ---------- */
   header{
+    position:relative;
     padding:22px 22px 16px;
     padding-top:max(22px, env(safe-area-inset-top));
     color:var(--cream);
   }
   .head-top{display:flex; justify-content:space-between; align-items:flex-start;}
+  .dog-mascot{
+    position:absolute; right:14px; top:max(12px, env(safe-area-inset-top));
+    width:78px; height:83px; cursor:pointer; z-index:5;
+    filter:drop-shadow(0 4px 8px rgba(0,0,0,.35));
+  }
+  .dog-mascot svg{width:100%; height:100%; display:block; transform-origin:50% 95%; animation:dogBreath 3.6s ease-in-out infinite;}
+  .dog-mascot svg.hop{animation:dogHop .6s ease;}
+  .dog-mascot .mood{display:none;}
+  .dog-mascot[data-mood="happy"] .mood-happy,
+  .dog-mascot[data-mood="worry"] .mood-worry,
+  .dog-mascot[data-mood="sad"] .mood-sad{display:inline;}
+  @keyframes dogBreath{0%,100%{transform:scale(1,1);} 50%{transform:scale(1.025,.985);}}
+  @keyframes dogHop{
+    0%{transform:translateY(0) scale(1,1);}
+    25%{transform:translateY(2px) scale(1.06,.92);}
+    50%{transform:translateY(-12px) scale(.96,1.05) rotate(-5deg);}
+    75%{transform:translateY(0) scale(1.05,.95) rotate(3deg);}
+    100%{transform:translateY(0) scale(1,1);}
+  }
+  .dog-bubble{
+    position:absolute; right:14px; top:92px; z-index:6;
+    background:var(--paper); color:var(--ink); font-size:12px; font-weight:700;
+    padding:6px 11px; border-radius:12px; white-space:nowrap;
+    opacity:0; transform:translateY(-4px) scale(.96); transition:opacity .2s, transform .2s;
+    pointer-events:none; box-shadow:0 4px 10px rgba(0,0,0,.35);
+  }
+  .dog-bubble::before{
+    content:''; position:absolute; top:-5px; right:34px; width:10px; height:10px;
+    background:var(--paper); transform:rotate(45deg);
+  }
+  .dog-bubble.show{opacity:1; transform:none;}
+  @media (prefers-reduced-motion: reduce){
+    .dog-mascot svg, .dog-mascot svg.hop{animation:none;}
+  }
   .date-line{font-size:12.5px; color:var(--cream-soft); letter-spacing:.02em;}
-  .streak{
-    display:flex; align-items:center; gap:5px;
-    background:var(--bg-raised-2);
-    border:1px solid var(--divider);
-    padding:5px 10px 5px 8px; border-radius:100px;
-    font-size:12.5px; color:var(--gold);
-  }
-  .streak b{font-family:'IBM Plex Mono',monospace; font-weight:600;}
-  .today-label{margin-top:14px; font-size:13px; color:var(--cream-soft);}
-  .today-amount{
-    font-family:'IBM Plex Mono',monospace; font-weight:600;
-    font-size:40px; color:var(--cream); letter-spacing:-0.5px;
-    margin-top:2px;
-  }
-  .today-amount span{font-size:19px; color:var(--cream-soft); margin-right:4px; font-weight:500;}
   .nudge-btn{
     margin-top:10px; font-size:12.5px; color:var(--gold);
     display:none; align-items:center; gap:6px;
@@ -91,6 +111,13 @@
   }
   .nudge-btn.show{display:flex;}
   .nudge-btn:active{background:var(--bg-raised);}
+  .today-label{margin-top:14px; font-size:13px; color:var(--cream-soft);}
+  .today-amount{
+    font-family:'IBM Plex Mono',monospace; font-weight:600;
+    font-size:40px; color:var(--cream); letter-spacing:-0.5px;
+    margin-top:2px;
+  }
+  .today-amount span{font-size:19px; color:var(--cream-soft); margin-right:4px; font-weight:500;}
 
   /* ---------- Budget row ---------- */
   .budget-row{margin-top:14px;}
@@ -160,6 +187,15 @@
     font-family:'IBM Plex Mono',monospace; font-size:34px; font-weight:600;
     color:var(--ink); min-height:40px;
   }
+  .note-input{
+    width:100%; border:1px solid var(--paper-line); background:var(--paper-2); border-radius:10px;
+    padding:10px 12px; font-size:13.5px; font-family:'Noto Sans TC'; color:var(--ink);
+    margin-bottom:14px; outline:none;
+    -webkit-user-select:text; user-select:text;
+  }
+  .note-input::placeholder{color:var(--ink-soft); opacity:.75;}
+  .note-input:focus{border-color:var(--ink);}
+  .modal-input{-webkit-user-select:text; user-select:text;}
   .amount-display.shake{animation:shake .35s;}
   @keyframes shake{
     0%,100%{transform:translateX(0);}
@@ -244,17 +280,6 @@
 
   .sec-title{font-size:12px; font-weight:700; color:var(--ink-soft); letter-spacing:.04em; margin:0 0 10px;}
 
-  .badge-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:24px;}
-  .badge-cell{
-    background:var(--paper-2); border-radius:12px; padding:11px 4px 8px;
-    display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center;
-    transition:opacity .2s;
-  }
-  .badge-cell .ic{font-size:22px;}
-  .badge-cell .lb{font-size:10px; font-weight:700; color:var(--ink); line-height:1.3;}
-  .badge-cell.locked{opacity:.32;}
-  .badge-cell.locked .ic{filter:grayscale(100%);}
-  .badge-cell.locked .lb{color:var(--ink-soft);}
 
   .week-chart{display:flex; align-items:flex-end; gap:8px; height:90px; margin-bottom:24px; padding:0 2px;}
   .week-bar{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%;}
@@ -268,6 +293,69 @@
   .cat-row .track{background:var(--paper-2); border-radius:6px; height:7px; overflow:hidden;}
   .cat-row .fill{height:100%; background:var(--ink); border-radius:6px;}
 
+  .view-toggle{display:flex; background:var(--paper-2); border-radius:10px; padding:3px; gap:3px; margin-bottom:16px;}
+  .view-toggle button{
+    flex:1; border:none; background:transparent; padding:8px 0; font-family:'Noto Sans TC';
+    font-size:13px; font-weight:700; color:var(--ink-soft); border-radius:8px; cursor:pointer;
+  }
+  .view-toggle button.active{background:var(--ink); color:var(--paper);}
+  .month-switch .lb.wide{min-width:170px; white-space:nowrap;}
+  .month-switch button.day-label-btn{
+    width:auto; height:30px; min-width:190px; padding:0 10px; border-radius:8px;
+    background:var(--paper-2); font-family:'IBM Plex Mono','Noto Sans TC',monospace;
+    font-size:13.5px; font-weight:700; color:var(--ink); line-height:1; cursor:pointer;
+  }
+  .mini-cal{background:var(--paper-2); border-radius:14px; padding:12px 12px 10px; margin-bottom:16px;}
+  .cal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;}
+  .cal-head button{
+    border:none; background:var(--paper); color:var(--ink); width:28px; height:28px;
+    border-radius:8px; font-size:15px; cursor:pointer; line-height:1;
+  }
+  .cal-head button:disabled{opacity:.3; cursor:default;}
+  .cal-head .ttl{font-size:13.5px; font-weight:700; font-family:'IBM Plex Mono','Noto Sans TC',monospace;}
+  .cal-week, .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:3px;}
+  .cal-week div{text-align:center; font-size:10.5px; color:var(--ink-soft); font-weight:700; padding:2px 0 4px;}
+  .cal-grid button{
+    position:relative; aspect-ratio:1/1; border:1px solid transparent; background:transparent;
+    border-radius:10px; font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:500;
+    color:var(--ink); cursor:pointer; padding:0;
+  }
+  .cal-grid button.today{border-color:var(--ink);}
+  .cal-grid button.selected{background:var(--ink); color:var(--paper);}
+  .cal-grid button:disabled{opacity:.25; cursor:default;}
+  .cal-grid button.has::after{
+    content:''; position:absolute; left:50%; bottom:3px; width:5px; height:5px;
+    margin-left:-2.5px; border-radius:50%; background:var(--gold);
+  }
+  .cal-grid button.has-exp::after{background:var(--stamp-red);}
+  .cal-grid button.has-inc::after{background:var(--ledger-green);}
+  .cal-grid button.selected.has::after{background:var(--paper);}
+  .cal-foot{display:flex; align-items:center; justify-content:space-between; margin-top:8px; font-size:10.5px; color:var(--ink-soft);}
+  .cal-foot .legend{display:flex; gap:10px; align-items:center;}
+  .cal-foot .legend i{display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:3px; vertical-align:middle;}
+  .cal-today-btn{
+    border:none; background:var(--ink); color:var(--paper); font-family:'Noto Sans TC';
+    font-size:11px; font-weight:700; padding:5px 12px; border-radius:100px; cursor:pointer;
+  }
+  .day-net{text-align:center; font-size:12.5px; color:var(--ink-soft); margin:-8px 0 20px;}
+  .day-net b{font-family:'IBM Plex Mono',monospace; font-size:13.5px;}
+  .day-net b.pos{color:var(--ledger-green);}
+  .day-net b.neg{color:var(--stamp-red);}
+  .cat-detail{margin-bottom:12px;}
+  .cat-detail summary{list-style:none; cursor:pointer;}
+  .cat-detail summary::-webkit-details-marker{display:none;}
+  .cat-detail .cat-row{margin-bottom:0;}
+  .cat-row .meta{font-size:10.5px; color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; margin-left:2px;}
+  .cat-row .amt-wrap{display:flex; align-items:center; gap:6px;}
+  .cat-row .chev{font-size:9px; color:var(--ink-soft); transition:transform .2s;}
+  .cat-detail[open] .chev{transform:rotate(180deg);}
+  .cat-row .fill.income{background:var(--ledger-green);}
+  .items{margin:8px 0 2px 4px; padding:4px 10px; background:var(--paper-2); border-radius:10px;}
+  .item-row{display:flex; gap:10px; align-items:baseline; font-size:12px; padding:6px 0; border-bottom:1px dashed var(--paper-line);}
+  .item-row:last-child{border-bottom:none;}
+  .item-row .t{font-family:'IBM Plex Mono',monospace; color:var(--ink-soft); font-size:11px; width:38px; flex-shrink:0;}
+  .item-row .n{flex:1; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .item-row .a{font-family:'IBM Plex Mono',monospace; font-weight:600;}
   .empty-stats{text-align:center; color:var(--ink-soft); font-size:13px; padding:30px 0;}
 
   .export-btn{
@@ -335,15 +423,73 @@
   <div class="loading" id="loading">載入中…</div>
 
   <header>
+    <div class="dog-mascot" id="dogMascot" data-mood="happy" onclick="petDog()" role="button" aria-label="撒摩耶犬，點一下摸摸牠"><svg viewBox="0 0 100 106" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <!-- body -->
+  <ellipse cx="50" cy="90" rx="27" ry="17" fill="#E3D9C6"/>
+  <ellipse cx="50" cy="88" rx="27" ry="17" fill="#FBF8F1"/>
+  <!-- paws -->
+  <ellipse cx="38" cy="99" rx="9" ry="5.5" fill="#EFE8D8"/>
+  <ellipse cx="62" cy="99" rx="9" ry="5.5" fill="#EFE8D8"/>
+  <path d="M35 98 v3 M38.5 97.5 v3.5 M42 98 v3 M58 98 v3 M61.5 97.5 v3.5 M65 98 v3" stroke="#D9CFBB" stroke-width="1" stroke-linecap="round"/>
+  <!-- ears -->
+  <path d="M19 42 Q13 20 22 6 Q25 2 30 5 Q43 13 47 27 Z" fill="#F3EDDF"/>
+  <path d="M81 42 Q87 20 78 6 Q75 2 70 5 Q57 13 53 27 Z" fill="#F3EDDF"/>
+  <path d="M24 36 Q20 21 25 11 Q27 9 29 11 Q38 18 41 28 Z" fill="#F2C9C0"/>
+  <path d="M76 36 Q80 21 75 11 Q73 9 71 11 Q62 18 59 28 Z" fill="#F2C9C0"/>
+  <!-- head shadow + ruff -->
+  <g fill="#E3D9C6">
+    <ellipse cx="50" cy="53" rx="34" ry="29"/>
+    <path d="M17 54 L8 60 L16 62 L10 69 L19 69 L16 76 L27 71 Z"/>
+    <path d="M83 54 L92 60 L84 62 L90 69 L81 69 L84 76 L73 71 Z"/>
+  </g>
+  <!-- head -->
+  <g fill="#FBF8F1">
+    <ellipse cx="50" cy="50" rx="34" ry="29"/>
+    <path d="M17 51 L8 57 L16 59 L10 66 L19 66 L16 73 L27 68 Z"/>
+    <path d="M83 51 L92 57 L84 59 L90 66 L81 66 L84 73 L73 68 Z"/>
+    <path d="M42 24 L46 16 L50 22 L54 16 L58 24 Z"/>
+  </g>
+  <!-- muzzle -->
+  <ellipse cx="50" cy="60" rx="16" ry="11.5" fill="#FFFFFF" stroke="#EADFCB" stroke-width="1.4"/>
+  <!-- cheeks -->
+  <ellipse cx="27" cy="57" rx="6" ry="4" fill="#F4B9B0" opacity=".65"/>
+  <ellipse cx="73" cy="57" rx="6" ry="4" fill="#F4B9B0" opacity=".65"/>
+  <!-- eyes -->
+  <ellipse cx="36" cy="48" rx="3.8" ry="4.4" fill="#2A2620"/>
+  <ellipse cx="64" cy="48" rx="3.8" ry="4.4" fill="#2A2620"/>
+  <circle cx="37.3" cy="46.4" r="1.4" fill="#fff"/>
+  <circle cx="65.3" cy="46.4" r="1.4" fill="#fff"/>
+  <!-- nose -->
+  <ellipse cx="50" cy="55.5" rx="4.8" ry="3.3" fill="#2A2620"/>
+  <ellipse cx="48.7" cy="54.5" rx="1.4" ry=".8" fill="#fff" opacity=".6"/>
+  <path d="M50 58.5 L50 61" stroke="#2A2620" stroke-width="1.8" stroke-linecap="round"/>
+
+  <g class="mood mood-happy">
+    <circle cx="36" cy="40.5" r="1.7" fill="#CFC3AB"/><circle cx="64" cy="40.5" r="1.7" fill="#CFC3AB"/>
+    <path d="M46.5 63.5 Q50 75 53.5 63.5 Z" fill="#F08A8A"/>
+    <path d="M50 64.5 L50 69" stroke="#D96B6B" stroke-width="1.1" stroke-linecap="round"/>
+    <path d="M40 61 Q45 68 50 61 Q55 68 60 61" stroke="#2A2620" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g class="mood mood-worry">
+    <path d="M30 40 L41 37.5 M70 40 L59 37.5" stroke="#B9AD96" stroke-width="2" stroke-linecap="round"/>
+    <path d="M42 64 Q46 61 50 64 Q54 67 58 64" stroke="#2A2620" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M78 30 Q82 37 78 40 Q74 37 78 30 Z" fill="#8CC5E8"/>
+  </g>
+  <g class="mood mood-sad">
+    <path d="M30 37 L41 40.5 M70 37 L59 40.5" stroke="#B9AD96" stroke-width="2" stroke-linecap="round"/>
+    <path d="M42 66 Q50 59 58 66" stroke="#2A2620" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M33 54 Q31 59 33 61 Q36 59 33 54 Z" fill="#8CC5E8"/>
+    <path d="M67 54 Q65 59 67 61 Q70 59 67 54 Z" fill="#8CC5E8"/>
+  </g></svg></div>
+    <div class="dog-bubble" id="dogBubble"></div>
     <div class="head-top">
       <div>
         <div class="date-line" id="dateLine">—</div>
       </div>
-      <div class="streak" id="streakBadge">🔥 <b id="streakNum">0</b>&nbsp;天連續記帳</div>
     </div>
     <div class="today-label">今日支出</div>
     <div class="today-amount"><span>NT$</span><span id="todayExpense">0</span></div>
-    <button class="nudge-btn" id="nudgeBtn" onclick="logCheckin(todayKey())">🌱 今天還沒花錢？點此打卡延續紀錄</button>
+    <button class="nudge-btn" id="nudgeBtn" onclick="logCheckin(todayKey())">🐶 今日沒花錢 一鍵紀錄 ✨</button>
 
     <div class="budget-row">
       <div class="budget-top">
@@ -375,6 +521,10 @@
       <div class="val" id="amountVal">0</div>
     </div>
 
+    <input class="note-input" id="noteInput" type="text" maxlength="24" enterkeyhint="done"
+           placeholder="✏️ 備註（選填）例如：午餐、捷運、朋友聚餐…"
+           onkeydown="if(event.key==='Enter'){this.blur();}">
+
     <div class="keypad">
       <button onclick="digit('7')">7</button><button onclick="digit('8')">8</button><button onclick="digit('9')">9</button>
       <button onclick="digit('4')">4</button><button onclick="digit('5')">5</button><button onclick="digit('6')">6</button>
@@ -391,9 +541,52 @@
   </div>
 
   <div class="stats-view" id="statsView">
-    <div class="sec-title">🏅 成就徽章</div>
-    <div class="badge-grid" id="badgeGrid"></div>
+    <div class="view-toggle">
+      <button class="active" id="viewDayBtn" onclick="setStatsView('day')">當日結算</button>
+      <button id="viewMonthBtn" onclick="setStatsView('month')">當月統計</button>
+    </div>
 
+    <div id="dayView">
+      <div class="month-switch">
+        <button id="prevDayBtn" onclick="changeDay(-1)">‹</button>
+        <button class="lb wide day-label-btn" id="dayLabel" onclick="toggleCalendar()">—</button>
+        <button id="nextDayBtn" onclick="changeDay(1)">›</button>
+      </div>
+
+      <div class="mini-cal" id="miniCal" style="display:none;">
+        <div class="cal-head">
+          <button id="calPrevBtn" onclick="changeCalMonth(-1)">‹</button>
+          <div class="ttl" id="calTitle">—</div>
+          <button id="calNextBtn" onclick="changeCalMonth(1)">›</button>
+        </div>
+        <div class="cal-week"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div class="cal-foot">
+          <div class="legend">
+            <span><i style="background:var(--stamp-red)"></i>有支出</span>
+            <span><i style="background:var(--ledger-green)"></i>只有收入</span>
+            <span><i style="background:var(--gold)"></i>無消費</span>
+          </div>
+          <button class="cal-today-btn" onclick="pickDay(todayKey())">今天</button>
+        </div>
+      </div>
+
+      <div class="stats-cards">
+        <div class="stat-card expense"><div class="lb">支出</div><div class="v mono" id="dayExpense">NT$0</div></div>
+        <div class="stat-card income"><div class="lb">收入</div><div class="v mono" id="dayIncome">NT$0</div></div>
+      </div>
+      <div class="day-net" id="dayNet"></div>
+
+      <div class="sec-title">支出分類結算</div>
+      <div id="dayExpenseBreakdown"></div>
+
+      <div id="dayIncomeSection" style="display:none; margin-top:22px;">
+        <div class="sec-title">收入分類</div>
+        <div id="dayIncomeBreakdown"></div>
+      </div>
+    </div>
+
+    <div id="monthView">
     <div class="month-switch">
       <button id="prevMonthBtn" onclick="changeMonth(-1)">‹</button>
       <div class="lb" id="monthLabel">2026年9月</div>
@@ -412,6 +605,7 @@
 
     <div class="sec-title">分類佔比</div>
     <div id="catBreakdown"></div>
+    </div>
 
     <button class="export-btn" id="shareCsvBtn" onclick="shareCSV()">📤 分享 / 寄送 CSV</button>
     <button class="export-btn secondary" onclick="exportCSV()">⬇ 直接下載 CSV</button>
@@ -439,13 +633,15 @@
 
 <script>
 const EXPENSE_CATS = [
-  {k:'food', ic:'🍜', lb:'餐飲'},
+  {k:'solo_meal', ic:'🍜', lb:'個人'},
+  {k:'social_meal', ic:'🍻', lb:'聚餐'},
   {k:'transport', ic:'🚌', lb:'交通'},
   {k:'shopping', ic:'🛍️', lb:'購物'},
   {k:'fun', ic:'🎬', lb:'娛樂'},
   {k:'daily', ic:'🧴', lb:'日用'},
   {k:'medical', ic:'💊', lb:'醫療'},
   {k:'rent', ic:'🏠', lb:'房租'},
+  {k:'bills', ic:'💡', lb:'帳單'},
   {k:'other_e', ic:'📎', lb:'其他'},
 ];
 const INCOME_CATS = [
@@ -456,31 +652,20 @@ const INCOME_CATS = [
 ];
 const CAT_LOOKUP = {};
 [...EXPENSE_CATS, ...INCOME_CATS].forEach(c => CAT_LOOKUP[c.k] = c);
-CAT_LOOKUP['checkin'] = {k:'checkin', ic:'🌱', lb:'無消費打卡'};
+CAT_LOOKUP['checkin'] = {k:'checkin', ic:'🌱', lb:'無消費'};
+CAT_LOOKUP['food'] = {k:'food', ic:'🍽️', lb:'餐飲'};  // 舊版分類，只保留給已記錄的資料顯示
 const OTHER_KEYS = ['other_e', 'other_i'];
-
-const BADGES = [
-  {id:'first_entry', ic:'📝', lb:'記帳新手', check:s=>s.totalEntries>=1},
-  {id:'entries_10', ic:'📝', lb:'10筆紀錄', check:s=>s.totalEntries>=10},
-  {id:'entries_50', ic:'📝', lb:'50筆紀錄', check:s=>s.totalEntries>=50},
-  {id:'entries_100', ic:'📝', lb:'100筆紀錄', check:s=>s.totalEntries>=100},
-  {id:'streak_3', ic:'🔥', lb:'3天連續', check:s=>s.streak>=3},
-  {id:'streak_7', ic:'🔥', lb:'7天連續', check:s=>s.streak>=7},
-  {id:'streak_30', ic:'🔥', lb:'30天連續', check:s=>s.streak>=30},
-  {id:'streak_100', ic:'🔥', lb:'百日達人', check:s=>s.streak>=100},
-  {id:'nospend_5', ic:'🌱', lb:'5次無消費', check:s=>s.noSpendCount>=5},
-  {id:'nospend_20', ic:'🌱', lb:'20次無消費', check:s=>s.noSpendCount>=20},
-  {id:'nospend_50', ic:'🌱', lb:'50次無消費', check:s=>s.noSpendCount>=50},
-  {id:'nospend_100', ic:'🌱', lb:'100次無消費', check:s=>s.noSpendCount>=100},
-];
 
 let state = {
   entries: [],
   amountStr: '',
   type: 'expense',
   budget: null,          // {amount}
-  badges: {},             // {badgeId: unlockedTimestamp}
   statsMonthOffset: 0,   // 0 = current month, -1 = previous month, etc.
+  statsView: 'day',       // 'day' | 'month'
+  statsDayAgo: 0,         // 0 = today, 1 = yesterday, ...
+  calOpen: false,         // mini calendar visible in the day view
+  calMonthAgo: 0,         // month shown in the mini calendar (0 = this month)
   entryDateKey: null,     // date the next logged entry will be filed under (yyyy-mm-dd); set in init()
   modal: {mode:null, catKey:null},
 };
@@ -554,6 +739,7 @@ async function init(){
   try{
     const res = await storageGet('entries');
     state.entries = res && res.value ? JSON.parse(res.value) : [];
+    state.entries = state.entries.filter(e => CAT_LOOKUP[e.category]);
   }catch(e){
     state.entries = [];
   }
@@ -562,12 +748,6 @@ async function init(){
     state.budget = b && b.value ? JSON.parse(b.value) : null;
   }catch(e){
     state.budget = null;
-  }
-  try{
-    const bd = await storageGet('badges');
-    state.badges = bd && bd.value ? JSON.parse(bd.value) : {};
-  }catch(e){
-    state.badges = {};
   }
   document.getElementById('dateLine').textContent = new Date().toLocaleDateString('zh-TW', {year:'numeric', month:'long', day:'numeric', weekday:'long'});
   state.entryDateKey = todayKey();
@@ -584,9 +764,6 @@ async function persistEntries(){
 async function persistBudget(){
   const ok = await storageSet('budget', JSON.stringify(state.budget));
   if(!ok) showToast('預算儲存失敗');
-}
-async function persistBadges(){
-  await storageSet('badges', JSON.stringify(state.badges));
 }
 
 function showToast(msg){
@@ -607,6 +784,7 @@ function setType(type){
 function renderCatGrid(){
   const cats = state.type === 'expense' ? EXPENSE_CATS : INCOME_CATS;
   const grid = document.getElementById('catGrid');
+  grid.style.gridTemplateColumns = `repeat(${cats.length > 8 ? 5 : 4}, 1fr)`;
   grid.innerHTML = cats.map(c => `
     <div class="cat-btn" onclick="requestLog('${c.k}')">
       <div class="ic">${c.ic}</div>
@@ -641,10 +819,12 @@ function requestLog(catKey){
     disp.classList.add('shake');
     return;
   }
-  if(OTHER_KEYS.includes(catKey)){
+  const note = document.getElementById('noteInput').value.trim().slice(0, 24);
+  // 「其他」如果還沒寫備註，就跳出視窗問一下；其他類別直接記錄
+  if(OTHER_KEYS.includes(catKey) && !note){
     openNoteModal(catKey);
   }else{
-    finalizeEntry(catKey, '');
+    finalizeEntry(catKey, note);
   }
 }
 
@@ -652,6 +832,7 @@ function finalizeEntry(catKey, note){
   const amount = parseFloat(state.amountStr);
   if(!amount || amount <= 0) return;
 
+  const moodBefore = dogMood;
   const entryTs = tsForDateKey(state.entryDateKey);
   const monthKey = monthKeyForOffset(0).key;
   const prevMonthExpense = state.entries
@@ -670,6 +851,7 @@ function finalizeEntry(catKey, note){
   state.entries.sort((a,b) => b.ts - a.ts);
   state.amountStr = '';
   document.getElementById('amountVal').textContent = '0';
+  document.getElementById('noteInput').value = '';
   persistEntries();
 
   // Only count toward this month's budget if the entry actually falls in the current month
@@ -679,6 +861,7 @@ function finalizeEntry(catKey, note){
   }
 
   renderAll();
+  dogReactToLog(entry.type, moodBefore);
 }
 
 function checkBudgetToast(prevTotal, newTotal, budgetAmt){
@@ -695,23 +878,8 @@ function deleteEntry(id){
   renderAll();
 }
 
-function computeStreak(entries){
-  const days = new Set(entries.map(e => dateKey(e.ts)));
-  let streak = 0;
-  let cursor = new Date();
-  if(!days.has(dateKey(cursor.getTime()))){
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  while(days.has(dateKey(cursor.getTime()))){
-    streak++;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  return streak;
-}
-
 function logCheckin(dateKeyStr){
-  const already = state.entries.some(e => dateKey(e.ts) === dateKeyStr);
-  if(already){
+  if(state.entries.some(e => dateKey(e.ts) === dateKeyStr)){
     showToast('這天已經有紀錄了');
     return;
   }
@@ -727,7 +895,9 @@ function logCheckin(dateKeyStr){
   state.entries.sort((a,b) => b.ts - a.ts);
   persistEntries();
   renderAll();
-  showToast(dateKeyStr === todayKey() ? '已打卡，連續紀錄 +1 🌱' : '已補打卡 🌱');
+  dogHop();
+  dogSay(dateKeyStr === todayKey() ? '今天沒花錢，好棒！🌱' : '補好了 🌱', 1800);
+  showToast(dateKeyStr === todayKey() ? '已紀錄：今日沒花錢 🌱' : '已補上無消費紀錄 🌱');
 }
 
 function setEntryDate(daysAgo){
@@ -758,65 +928,22 @@ function renderDateRow(){
   }else{
     const d = new Date(state.entryDateKey + 'T00:00:00');
     const label = `${d.getMonth()+1}/${d.getDate()}（${['日','一','二','三','四','五','六'][d.getDay()]}）`;
-    const hasEntry = state.entries.some(e => dateKey(e.ts) === state.entryDateKey);
     note.classList.add('show');
+    const hasEntry = state.entries.some(e => dateKey(e.ts) === state.entryDateKey);
     note.innerHTML = `📅 正在為 ${label} 補記` +
       ` <button class="date-note-link" onclick="setEntryDate(0)">回到今天</button>` +
-      (hasEntry ? '' : ` <button class="date-note-link" onclick="logCheckin('${state.entryDateKey}')">這天沒花錢，補打卡</button>`);
+      (hasEntry ? '' : ` <button class="date-note-link" onclick="logCheckin('${state.entryDateKey}')">這天沒花錢</button>`);
   }
 }
 
-function computeUserStats(entries){
-  return {
-    streak: computeStreak(entries),
-    totalEntries: entries.filter(e => e.type === 'expense' || e.type === 'income').length,
-    noSpendCount: entries.filter(e => e.type === 'checkin').length,
-  };
-}
-
-function checkAndUnlockBadges(){
-  const stats = computeUserStats(state.entries);
-  const newly = [];
-  BADGES.forEach(b => {
-    if(!state.badges[b.id] && b.check(stats)){
-      state.badges[b.id] = Date.now();
-      newly.push(b);
-    }
-  });
-  if(newly.length){
-    persistBadges();
-    if(newly.length === 1){
-      showToast(`🎉 解鎖成就：${newly[0].ic} ${newly[0].lb}`);
-    }else{
-      showToast(`🎉 一次解鎖 ${newly.length} 個新成就！`);
-    }
-  }
-  renderBadgeGrid();
-}
-
-function renderBadgeGrid(){
-  const grid = document.getElementById('badgeGrid');
-  if(!grid) return;
-  grid.innerHTML = BADGES.map(b => {
-    const unlocked = !!state.badges[b.id];
-    return `
-      <div class="badge-cell ${unlocked ? '' : 'locked'}">
-        <div class="ic">${b.ic}</div>
-        <div class="lb">${b.lb}</div>
-      </div>
-    `;
-  }).join('');
-}
 
 function renderAll(){
   const tKey = todayKey();
   const todayEntries = state.entries.filter(e => dateKey(e.ts) === tKey);
   const todayExpense = todayEntries.filter(e=>e.type==='expense').reduce((s,e)=>s+e.amount,0);
   document.getElementById('todayExpense').textContent = fmt(todayExpense);
-
-  const streak = computeStreak(state.entries);
-  document.getElementById('streakNum').textContent = streak;
   document.getElementById('nudgeBtn').classList.toggle('show', !todayEntries.length);
+
 
   renderBudgetBar();
 
@@ -828,17 +955,17 @@ function renderAll(){
       const c = CAT_LOOKUP[e.category];
       const d = new Date(e.ts);
       const timeStr = `${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-      const isCheckin = e.type === 'checkin';
-      const sign = e.type === 'expense' ? '-' : (e.type === 'income' ? '+' : '');
-      const amtDisplay = isCheckin ? '✓' : `${sign}${fmt(e.amount)}`;
-      const label = e.note ? e.note : c.lb;
+      const sign = e.type === 'expense' ? '-' : '+';
+      const amtDisplay = e.type === 'checkin' ? '✓' : `${sign}${fmt(e.amount)}`;
+      const label = e.note ? escapeHtml(e.note) : c.lb;
+      const subLine = e.note ? `${c.lb} · ${timeStr}` : timeStr;
       return `
         <div class="row">
           <div class="left">
             <div class="ic">${c.ic}</div>
             <div class="meta">
               <div class="cat">${label}</div>
-              <div class="time">${timeStr}</div>
+              <div class="time">${subLine}</div>
             </div>
           </div>
           <div style="display:flex; align-items:center;">
@@ -850,9 +977,66 @@ function renderAll(){
     }).join('');
   }
 
-  checkAndUnlockBadges();
   renderDateRow();
   renderStats();
+}
+
+/* ---------- Dog mascot ---------- */
+let dogMood = 'happy';
+let dogBubbleTimer = null;
+let dogLastLine = -1;
+
+const DOG_LINES = {
+  happy: ['汪！', '摸摸我～', '今天也要記帳喔 🐾', '我最喜歡你了 💕', '記完帳要不要喝杯飲料？', '汪汪！', '尾巴搖搖～'],
+  worry: ['預算有點緊喔…', '再花下去錢包要哭了 😰', '要不要先看看統計？'],
+  sad:   ['嗚…預算爆掉了', '下個月一起加油 💪', '先深呼吸，我陪你'],
+};
+const DOG_LOG_LINES = {
+  expense: ['記好囉！🐾', '收到！汪', '有記有保佑 ✨', '又完成一筆～'],
+  income:  ['有收入！汪汪 🎉', '太棒了！🎉', '錢錢進來～💰'],
+};
+
+function setDogMood(mood){
+  dogMood = mood;
+  const el = document.getElementById('dogMascot');
+  if(el) el.dataset.mood = mood;
+}
+function dogSay(text, ms){
+  const b = document.getElementById('dogBubble');
+  if(!b) return;
+  b.textContent = text;
+  b.classList.add('show');
+  clearTimeout(dogBubbleTimer);
+  dogBubbleTimer = setTimeout(() => b.classList.remove('show'), ms || 2200);
+}
+function dogHop(){
+  const svg = document.querySelector('#dogMascot svg');
+  if(!svg) return;
+  svg.classList.remove('hop');
+  void svg.getBoundingClientRect();
+  svg.classList.add('hop');
+  clearTimeout(dogHop._t);
+  dogHop._t = setTimeout(() => svg.classList.remove('hop'), 650);
+}
+function pickLine(list){
+  let i = Math.floor(Math.random() * list.length);
+  if(list.length > 1 && i === dogLastLine) i = (i + 1) % list.length;
+  dogLastLine = i;
+  return list[i];
+}
+function petDog(){
+  dogHop();
+  dogSay(pickLine(DOG_LINES[dogMood] || DOG_LINES.happy));
+}
+function dogReactToLog(type, moodBefore){
+  dogHop();
+  if(dogMood !== moodBefore && dogMood === 'worry'){
+    dogSay('預算用到 80% 了，小心喔 😰', 2800);
+  }else if(dogMood !== moodBefore && dogMood === 'sad'){
+    dogSay('超過預算了…汪嗚 😢', 2800);
+  }else{
+    dogSay(pickLine(DOG_LOG_LINES[type] || DOG_LOG_LINES.expense), 1800);
+  }
 }
 
 function renderBudgetBar(){
@@ -868,6 +1052,7 @@ function renderBudgetBar(){
     textEl.textContent = '尚未設定本月預算';
     fillEl.style.width = '0%';
     fillEl.className = 'budget-bar-fill';
+    setDogMood('happy');
     return;
   }
   const budgetAmt = state.budget.amount;
@@ -875,6 +1060,7 @@ function renderBudgetBar(){
   textEl.textContent = `本月預算 NT$${fmt(monthExpense)} / NT$${fmt(budgetAmt)}（${Math.round((monthExpense/budgetAmt)*100)}%）`;
   fillEl.style.width = pct + '%';
   fillEl.className = 'budget-bar-fill' + (monthExpense >= budgetAmt ? ' over' : (monthExpense >= budgetAmt*0.8 ? ' warn' : ''));
+  setDogMood(monthExpense >= budgetAmt ? 'sad' : (monthExpense >= budgetAmt*0.8 ? 'worry' : 'happy'));
 }
 
 function changeMonth(delta){
@@ -884,7 +1070,7 @@ function changeMonth(delta){
   renderStats();
 }
 
-function renderStats(){
+function renderMonthStats(){
   const {key: monthKey, date: monthDate} = monthKeyForOffset(state.statsMonthOffset);
   document.getElementById('monthLabel').textContent = `${monthDate.getFullYear()}年${monthDate.getMonth()+1}月`;
   document.getElementById('nextMonthBtn').disabled = state.statsMonthOffset >= 0;
@@ -943,6 +1129,167 @@ function renderStats(){
   }
 }
 
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+}
+
+function setStatsView(view){
+  state.statsView = view;
+  renderStats();
+}
+function changeDay(delta){
+  const next = state.statsDayAgo - delta;   // delta -1 = go to an earlier day
+  if(next < 0) return;
+  state.statsDayAgo = next;
+  if(state.calOpen) calSyncToSelected();
+  renderStats();
+}
+
+/* ---------- Mini calendar (day view) ---------- */
+function calSyncToSelected(){
+  const [y, m] = dateKeyOffset(state.statsDayAgo).split('-').map(Number);
+  const now = new Date();
+  state.calMonthAgo = Math.max(0, (now.getFullYear() * 12 + now.getMonth()) - (y * 12 + (m - 1)));
+}
+function toggleCalendar(){
+  state.calOpen = !state.calOpen;
+  if(state.calOpen) calSyncToSelected();
+  renderStats();
+}
+function changeCalMonth(delta){
+  const next = state.calMonthAgo - delta;   // delta -1 = previous month
+  if(next < 0) return;
+  state.calMonthAgo = next;
+  renderCalendar();
+}
+function pickDay(key){
+  if(key > todayKey()) return;
+  const [y, m, d] = key.split('-').map(Number);
+  const now = new Date();
+  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  state.statsDayAgo = Math.max(0, Math.round((startToday - new Date(y, m - 1, d)) / 86400000));
+  state.calOpen = false;
+  renderStats();
+}
+function renderCalendar(){
+  const first = new Date();
+  first.setDate(1);
+  first.setMonth(first.getMonth() - state.calMonthAgo);
+  const y = first.getFullYear(), m = first.getMonth();
+  document.getElementById('calTitle').textContent = `${y}年${m + 1}月`;
+  document.getElementById('calNextBtn').disabled = state.calMonthAgo === 0;
+
+  const prefix = `${y}-${pad(m + 1)}-`;
+  const flags = {};   // dateKey -> 'exp' | 'inc' | 'chk'
+  state.entries.forEach(e => {
+    const k = dateKey(e.ts);
+    if(!k.startsWith(prefix)) return;
+    const cur = flags[k];
+    if(e.type === 'expense') flags[k] = 'exp';
+    else if(e.type === 'income' && cur !== 'exp') flags[k] = 'inc';
+    else if(e.type === 'checkin' && !cur) flags[k] = 'chk';
+  });
+
+  const selectedKey = dateKeyOffset(state.statsDayAgo);
+  const todayK = todayKey();
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+  const lead = first.getDay();
+  let cells = '';
+  for(let i = 0; i < lead; i++) cells += '<div></div>';
+  for(let day = 1; day <= daysInMonth; day++){
+    const key = `${prefix}${pad(day)}`;
+    const cls = [
+      key === todayK ? 'today' : '',
+      key === selectedKey ? 'selected' : '',
+      flags[key] ? 'has has-' + flags[key] : '',
+    ].filter(Boolean).join(' ');
+    cells += `<button class="${cls}" ${key > todayK ? 'disabled' : ''} onclick="pickDay('${key}')">${day}</button>`;
+  }
+  document.getElementById('calGrid').innerHTML = cells;
+}
+function dayLabelText(daysAgo){
+  const [y, m, d] = dateKeyOffset(daysAgo).split('-').map(Number);
+  const wd = ['日','一','二','三','四','五','六'][new Date(y, m-1, d).getDay()];
+  const suffix = daysAgo === 0 ? ' · 今天' : daysAgo === 1 ? ' · 昨天' : daysAgo === 2 ? ' · 前天' : '';
+  return `${m}/${d}（${wd}）${suffix}`;
+}
+
+function catGroupsHTML(list, total, fillClass){
+  const groups = {};
+  list.forEach(e => { (groups[e.category] = groups[e.category] || []).push(e); });
+  return Object.entries(groups)
+    .map(([k, items]) => ({k, items, sum: items.reduce((s,e)=>s+e.amount, 0)}))
+    .sort((a,b) => b.sum - a.sum)
+    .map(g => {
+      const c = CAT_LOOKUP[g.k];
+      const pct = total > 0 ? (g.sum / total) * 100 : 0;
+      const pctText = pct > 0 && pct < 1 ? '<1%' : Math.round(pct) + '%';
+      const rows = g.items.slice().sort((a,b) => b.ts - a.ts).map(e => {
+        const d = new Date(e.ts);
+        const t = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        return `<div class="item-row"><span class="t">${t}</span><span class="n">${e.note ? escapeHtml(e.note) : '—'}</span><span class="a">${fmt(e.amount)}</span></div>`;
+      }).join('');
+      return `
+        <details class="cat-detail">
+          <summary>
+            <div class="cat-row">
+              <div class="top">
+                <div class="nm">${c.ic} ${c.lb} <span class="meta">${g.items.length} 筆 · ${pctText}</span></div>
+                <div class="amt-wrap"><div class="amt">NT$${fmt(g.sum)}</div><span class="chev">▼</span></div>
+              </div>
+              <div class="track"><div class="fill ${fillClass || ''}" style="width:${Math.max(pct, 3)}%"></div></div>
+            </div>
+          </summary>
+          <div class="items">${rows}</div>
+        </details>`;
+    }).join('');
+}
+
+function renderDayStats(){
+  const key = dateKeyOffset(state.statsDayAgo);
+  document.getElementById('dayLabel').textContent = '📅 ' + dayLabelText(state.statsDayAgo);
+  document.getElementById('miniCal').style.display = state.calOpen ? '' : 'none';
+  if(state.calOpen) renderCalendar();
+  document.getElementById('nextDayBtn').disabled = state.statsDayAgo === 0;
+
+  const dayEntries = state.entries.filter(e => dateKey(e.ts) === key);
+  const exp = dayEntries.filter(e => e.type === 'expense');
+  const inc = dayEntries.filter(e => e.type === 'income');
+  const expTotal = exp.reduce((s,e) => s + e.amount, 0);
+  const incTotal = inc.reduce((s,e) => s + e.amount, 0);
+  document.getElementById('dayExpense').textContent = 'NT$' + fmt(expTotal);
+  document.getElementById('dayIncome').textContent = 'NT$' + fmt(incTotal);
+
+  const netEl = document.getElementById('dayNet');
+  if(exp.length || inc.length){
+    const net = incTotal - expTotal;
+    netEl.innerHTML = `當日結餘 <b class="${net >= 0 ? 'pos' : 'neg'}">${net >= 0 ? '+' : '-'}NT$${fmt(Math.abs(net))}</b>`;
+  }else{
+    netEl.innerHTML = '';
+  }
+
+  const expEl = document.getElementById('dayExpenseBreakdown');
+  if(exp.length){
+    expEl.innerHTML = catGroupsHTML(exp, expTotal, '');
+  }else{
+    const noSpend = dayEntries.some(e => e.type === 'checkin');
+    expEl.innerHTML = `<div class="empty-stats">${noSpend ? '🌱 這天無消費' : (inc.length ? '這天沒有支出' : '這天還沒有記錄')}</div>`;
+  }
+
+  const incSection = document.getElementById('dayIncomeSection');
+  incSection.style.display = inc.length ? '' : 'none';
+  document.getElementById('dayIncomeBreakdown').innerHTML = inc.length ? catGroupsHTML(inc, incTotal, 'income') : '';
+}
+
+function renderStats(){
+  const isDay = state.statsView === 'day';
+  document.getElementById('viewDayBtn').classList.toggle('active', isDay);
+  document.getElementById('viewMonthBtn').classList.toggle('active', !isDay);
+  document.getElementById('dayView').style.display = isDay ? '' : 'none';
+  document.getElementById('monthView').style.display = isDay ? 'none' : '';
+  if(isDay) renderDayStats(); else renderMonthStats();
+}
+
 function switchTab(tab){
   const isRecord = tab === 'record';
   document.getElementById('navRecord').classList.toggle('active', isRecord);
@@ -950,7 +1297,7 @@ function switchTab(tab){
   document.querySelector('.paper-panel').style.display = isRecord ? '' : 'none';
   document.getElementById('tapeWrap').style.display = isRecord ? '' : 'none';
   document.getElementById('statsView').classList.toggle('show', !isRecord);
-  if(!isRecord) renderStats();
+  if(!isRecord){ state.statsDayAgo = 0; state.calOpen = false; renderStats(); }
 }
 
 /* ---------- Modal ---------- */
@@ -1015,7 +1362,7 @@ function buildCSV(){
     const d = new Date(e.ts);
     const dateStr = `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())}`;
     const timeStr = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    const typeStr = e.type === 'expense' ? '支出' : (e.type === 'income' ? '收入' : '打卡');
+    const typeStr = e.type === 'expense' ? '支出' : (e.type === 'income' ? '收入' : '無消費');
     return [dateStr, timeStr, typeStr, c.lb, e.amount, e.note || ''].map(csvEscape).join(',');
   }).join('\n');
   const csvText = '\uFEFF' + header + rows;
