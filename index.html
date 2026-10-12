@@ -241,19 +241,20 @@
     from{opacity:0; transform:translateY(-6px);}
     to{opacity:1; transform:translateY(0);}
   }
-  .row .left{display:flex; align-items:center; gap:9px;}
+  .row .left{display:flex; align-items:center; gap:9px; min-width:0; flex:1;}
   .row .ic{font-size:15px;}
-  .row .meta{display:flex; flex-direction:column;}
-  .row .cat{font-size:13.5px; font-weight:500; color:var(--ink);}
+  .row .meta{display:flex; flex-direction:column; min-width:0;}
+  .row .cat{font-size:13.5px; font-weight:500; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .row .time{font-size:10.5px; color:var(--ink-soft); font-family:'IBM Plex Mono',monospace;}
   .row .amt{font-family:'IBM Plex Mono',monospace; font-size:15px; font-weight:600;}
   .row .amt.expense{color:var(--stamp-red);}
   .row .amt.income{color:var(--ledger-green);}
   .row .amt.checkin{color:var(--gold); font-size:16px;}
-  .row .del{
+  .row .del, .row .edit{
     border:none; background:transparent; color:var(--ink-soft); font-size:11px;
-    padding:2px 6px; cursor:pointer; margin-left:6px; text-decoration:underline;
+    padding:4px 6px; cursor:pointer; margin-left:4px; text-decoration:underline; flex-shrink:0;
   }
+  .row .edit{margin-left:8px; color:var(--ink);}
   .empty-tape{text-align:center; color:var(--ink-soft); font-size:13px; padding:30px 0;}
 
   /* ---------- Stats view ---------- */
@@ -415,6 +416,31 @@
   }
   .modal-actions .cancel{background:var(--paper-2); color:var(--ink-soft);}
   .modal-actions .confirm{background:var(--ink); color:var(--paper);}
+  .modal-actions .danger{background:#EFD9D2; color:var(--stamp-red); flex:0 0 auto; padding-left:14px; padding-right:14px;}
+  .modal-actions .danger.armed{background:var(--stamp-red); color:var(--paper);}
+  .edit-box{max-width:340px; max-height:92vh; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  .edit-type{display:flex; background:var(--paper-2); border-radius:10px; padding:3px; gap:3px; margin:10px 0 12px;}
+  .edit-type button{
+    flex:1; border:none; background:transparent; padding:7px 0; font-family:'Noto Sans TC';
+    font-size:13px; font-weight:700; color:var(--ink-soft); border-radius:8px; cursor:pointer;
+  }
+  .edit-type button.active.expense{background:var(--stamp-red); color:#F3EEE2;}
+  .edit-type button.active.income{background:var(--ledger-green); color:#F3EEE2;}
+  .edit-amount{display:flex; align-items:center; gap:8px; margin-bottom:12px;}
+  .edit-amount span{font-size:14px; font-weight:700; color:var(--ink-soft);}
+  .edit-amount .modal-input{margin-bottom:0; font-size:20px; font-weight:600;}
+  .edit-cats{display:grid; grid-template-columns:repeat(5,1fr); gap:5px; margin-bottom:12px;}
+  .edit-cat{
+    border:1px solid var(--paper-line); background:var(--paper); border-radius:10px;
+    padding:6px 0 5px; display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer;
+    font-family:'Noto Sans TC'; color:var(--ink-soft);
+  }
+  .edit-cat .ic{font-size:16px;}
+  .edit-cat .lb{font-size:10px; font-weight:600;}
+  .edit-cat.active{background:var(--ink); border-color:var(--ink); color:var(--paper);}
+  .edit-label{font-size:11px; font-weight:700; color:var(--ink-soft); margin:0 0 5px 2px;}
+  .item-row{cursor:pointer;}
+  .item-row .pen{font-size:11px; opacity:.55; margin-left:2px;}
 </style>
 </head>
 <body>
@@ -609,6 +635,8 @@
 
     <button class="export-btn" id="shareCsvBtn" onclick="shareCSV()">📤 分享 / 寄送 CSV</button>
     <button class="export-btn secondary" onclick="exportCSV()">⬇ 直接下載 CSV</button>
+    <button class="export-btn secondary" onclick="document.getElementById('csvFileInput').click()">📥 從 CSV 匯入 / 還原紀錄</button>
+    <input type="file" id="csvFileInput" accept=".csv,text/csv,text/plain" style="display:none" onchange="onCsvFileChosen(this)">
   </div>
 
   <div class="toast" id="toast"></div>
@@ -617,6 +645,28 @@
     <button class="active" id="navRecord" onclick="switchTab('record')"><span class="ic">🧾</span>記帳</button>
     <button id="navStats" onclick="switchTab('stats')"><span class="ic">📊</span>統計</button>
   </nav>
+
+  <div class="modal-overlay" id="editOverlay" onclick="if(event.target===this)closeEdit()">
+    <div class="modal-box edit-box">
+      <div class="modal-title">✏️ 修改這筆</div>
+      <div class="edit-type">
+        <button class="expense active" id="editTypeExpense" onclick="setEditType('expense')">支出</button>
+        <button class="income" id="editTypeIncome" onclick="setEditType('income')">收入</button>
+      </div>
+      <div class="edit-amount"><span>NT$</span><input class="modal-input mono" id="editAmount" type="text" inputmode="decimal" placeholder="金額"></div>
+      <div class="edit-label">分類</div>
+      <div class="edit-cats" id="editCats"></div>
+      <div class="edit-label">備註</div>
+      <input class="modal-input" id="editNote" type="text" maxlength="24" placeholder="備註（選填）">
+      <div class="edit-label">日期</div>
+      <input class="modal-input mono" id="editDate" type="date">
+      <div class="modal-actions">
+        <button class="danger" id="editDeleteBtn" onclick="deleteFromEdit()">刪除</button>
+        <button class="cancel" onclick="closeEdit()">取消</button>
+        <button class="confirm" onclick="saveEdit()">儲存</button>
+      </div>
+    </div>
+  </div>
 
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal-box">
@@ -665,6 +715,8 @@ let state = {
   statsView: 'day',       // 'day' | 'month'
   statsDayAgo: 0,         // 0 = today, 1 = yesterday, ...
   calOpen: false,         // mini calendar visible in the day view
+  edit: null,             // entry currently being edited {id, type, category, origCategory}
+  importPending: null,    // parsed CSV rows waiting for the user's confirmation
   calMonthAgo: 0,         // month shown in the mini calendar (0 = this month)
   entryDateKey: null,     // date the next logged entry will be filed under (yyyy-mm-dd); set in init()
   modal: {mode:null, catKey:null},
@@ -970,6 +1022,7 @@ function renderAll(){
           </div>
           <div style="display:flex; align-items:center;">
             <div class="amt ${e.type}">${amtDisplay}</div>
+            ${e.type === 'checkin' ? '' : `<button class="edit" onclick="openEdit('${e.id}')">編輯</button>`}
             <button class="del" onclick="deleteEntry('${e.id}')">刪除</button>
           </div>
         </div>
@@ -1145,6 +1198,97 @@ function changeDay(delta){
   renderStats();
 }
 
+/* ---------- Edit an existing entry ---------- */
+function tsKeepTime(dateKeyStr, origTs){
+  const o = new Date(origTs);
+  const [y, m, d] = dateKeyStr.split('-').map(Number);
+  return new Date(y, m - 1, d, o.getHours(), o.getMinutes(), o.getSeconds(), o.getMilliseconds()).getTime();
+}
+function openEdit(id){
+  const e = state.entries.find(x => x.id === id);
+  if(!e || e.type === 'checkin') return;
+  state.edit = {id, type: e.type, category: e.category, origCategory: e.category};
+  document.getElementById('editAmount').value = e.amount;
+  document.getElementById('editNote').value = e.note || '';
+  const dateInput = document.getElementById('editDate');
+  dateInput.max = todayKey();
+  dateInput.value = dateKey(e.ts);
+  const del = document.getElementById('editDeleteBtn');
+  del.classList.remove('armed');
+  del.textContent = '刪除';
+  renderEditTypeButtons();
+  renderEditCats();
+  document.getElementById('editOverlay').classList.add('show');
+}
+function closeEdit(){
+  document.getElementById('editOverlay').classList.remove('show');
+  state.edit = null;
+}
+function renderEditTypeButtons(){
+  document.getElementById('editTypeExpense').classList.toggle('active', state.edit.type === 'expense');
+  document.getElementById('editTypeIncome').classList.toggle('active', state.edit.type === 'income');
+}
+function setEditType(type){
+  if(!state.edit || state.edit.type === type) return;
+  state.edit.type = type;
+  state.edit.category = type === 'expense' ? 'other_e' : 'other_i';
+  renderEditTypeButtons();
+  renderEditCats();
+}
+function pickEditCat(key){
+  state.edit.category = key;
+  renderEditCats();
+}
+function renderEditCats(){
+  const base = state.edit.type === 'expense' ? EXPENSE_CATS : INCOME_CATS;
+  // an old-style 餐飲 record keeps its original category available so it can be left unchanged
+  const list = (state.edit.type === 'expense' && state.edit.origCategory === 'food') ? [CAT_LOOKUP['food'], ...base] : base;
+  document.getElementById('editCats').innerHTML = list.map(c => `
+    <button class="edit-cat ${c.k === state.edit.category ? 'active' : ''}" onclick="pickEditCat('${c.k}')">
+      <span class="ic">${c.ic}</span><span class="lb">${c.lb}</span>
+    </button>`).join('');
+}
+function saveEdit(){
+  if(!state.edit) return;
+  const e = state.entries.find(x => x.id === state.edit.id);
+  if(!e){ closeEdit(); return; }
+  const amt = parseFloat(String(document.getElementById('editAmount').value).replace(/,/g, ''));
+  if(!amt || amt <= 0){
+    showToast('請輸入正確的金額');
+    document.getElementById('editAmount').focus();
+    return;
+  }
+  const dk = document.getElementById('editDate').value || dateKey(e.ts);
+  if(dk > todayKey()){
+    showToast('不能選未來的日期');
+    return;
+  }
+  e.amount = Math.round(amt * 100) / 100;
+  e.type = state.edit.type;
+  e.category = state.edit.category;
+  e.note = document.getElementById('editNote').value.trim().slice(0, 24);
+  if(dk !== dateKey(e.ts)) e.ts = tsKeepTime(dk, e.ts);
+  state.entries.sort((a, b) => b.ts - a.ts);
+  persistEntries();
+  closeEdit();
+  renderAll();
+  dogHop();
+  dogSay('改好囉 ✏️', 1600);
+}
+function deleteFromEdit(){
+  if(!state.edit) return;
+  const btn = document.getElementById('editDeleteBtn');
+  if(!btn.classList.contains('armed')){
+    btn.classList.add('armed');
+    btn.textContent = '確定刪除？';
+    return;
+  }
+  const id = state.edit.id;
+  closeEdit();
+  deleteEntry(id);
+  showToast('已刪除這筆紀錄');
+}
+
 /* ---------- Mini calendar (day view) ---------- */
 function calSyncToSelected(){
   const [y, m] = dateKeyOffset(state.statsDayAgo).split('-').map(Number);
@@ -1227,7 +1371,7 @@ function catGroupsHTML(list, total, fillClass){
       const rows = g.items.slice().sort((a,b) => b.ts - a.ts).map(e => {
         const d = new Date(e.ts);
         const t = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-        return `<div class="item-row"><span class="t">${t}</span><span class="n">${e.note ? escapeHtml(e.note) : '—'}</span><span class="a">${fmt(e.amount)}</span></div>`;
+        return `<div class="item-row" onclick="openEdit('${e.id}')"><span class="t">${t}</span><span class="n">${e.note ? escapeHtml(e.note) : '—'}</span><span class="a">${fmt(e.amount)}</span><span class="pen">✏️</span></div>`;
       }).join('');
       return `
         <details class="cat-detail">
@@ -1309,6 +1453,8 @@ function openNoteModal(catKey){
   input.className = 'modal-input';
   input.placeholder = '例如：紅包、罰單、修繕費…';
   input.value = '';
+  input.style.display = '';
+  document.getElementById('modalSub').style.whiteSpace = '';
   document.getElementById('modalOverlay').classList.add('show');
   setTimeout(()=>input.focus(), 50);
 }
@@ -1321,12 +1467,15 @@ function openBudgetModal(){
   input.placeholder = '輸入金額，例如 15000';
   input.value = state.budget && state.budget.amount ? state.budget.amount : '';
   input.setAttribute('inputmode','decimal');
+  input.style.display = '';
+  document.getElementById('modalSub').style.whiteSpace = '';
   document.getElementById('modalOverlay').classList.add('show');
   setTimeout(()=>input.focus(), 50);
 }
 function closeModal(){
   document.getElementById('modalOverlay').classList.remove('show');
   state.modal = {mode:null, catKey:null};
+  state.importPending = null;
 }
 function confirmModal(){
   const input = document.getElementById('modalInput');
@@ -1335,6 +1484,10 @@ function confirmModal(){
     const catKey = state.modal.catKey;
     closeModal();
     finalizeEntry(catKey, note);
+  }else if(state.modal.mode === 'import'){
+    const pending = state.importPending;
+    closeModal();
+    applyImport(pending);
   }else if(state.modal.mode === 'budget'){
     const amt = parseFloat(input.value);
     closeModal();
@@ -1345,6 +1498,143 @@ function confirmModal(){
       showToast('預算已更新');
     }
   }
+}
+
+/* ---------- CSV import ---------- */
+function parseCSV(text){
+  if(text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const rows = [];
+  let row = [], field = '', inQ = false;
+  const pushRow = () => {
+    row.push(field); field = '';
+    if(row.some(c => c.trim() !== '')) rows.push(row);
+    row = [];
+  };
+  for(let i = 0; i < text.length; i++){
+    const ch = text[i];
+    if(inQ){
+      if(ch === '"'){
+        if(text[i + 1] === '"'){ field += '"'; i++; } else inQ = false;
+      }else field += ch;
+    }else if(ch === '"') inQ = true;
+    else if(ch === ','){ row.push(field); field = ''; }
+    else if(ch === '\n' || ch === '\r'){ if(ch === '\r' && text[i + 1] === '\n') i++; pushRow(); }
+    else field += ch;
+  }
+  if(field !== '' || row.length) pushRow();
+  return rows;
+}
+
+const CSV_CAT_ALIASES = {'一人食':'solo_meal', '個人餐飲':'solo_meal', '朋友餐飲':'social_meal'};
+function csvCategoryKey(type, label){
+  const lb = (label || '').trim();
+  if(type === 'checkin') return {key:'checkin', known:true};
+  if(CSV_CAT_ALIASES[lb] && type === 'expense') return {key:CSV_CAT_ALIASES[lb], known:true};
+  if(type === 'expense' && lb === '餐飲') return {key:'food', known:true};
+  const list = type === 'expense' ? EXPENSE_CATS : INCOME_CATS;
+  const hit = list.find(c => c.lb === lb);
+  if(hit) return {key:hit.k, known:true};
+  return {key: type === 'expense' ? 'other_e' : 'other_i', known:false};
+}
+function csvEntryKey(ts, type, category, amount, note){
+  const d = new Date(ts);
+  return [dateKey(ts), pad(d.getHours()) + ':' + pad(d.getMinutes()), type, category, Number(amount), note || ''].join('|');
+}
+
+function analyzeCSV(text){
+  const rows = parseCSV(text);
+  const result = {total:0, toAdd:[], dup:0, invalid:0, remapped:0};
+  if(!rows.length) return result;
+
+  // locate columns by header name; fall back to the exported order
+  const head = rows[0].map(c => c.trim());
+  const hasHeader = head.includes('日期') || head.includes('金額');
+  const idx = name => head.indexOf(name);
+  const col = hasHeader
+    ? {date:idx('日期'), time:idx('時間'), type:idx('類型'), cat:idx('分類'), amt:idx('金額'), note:idx('備註')}
+    : {date:0, time:1, type:2, cat:3, amt:4, note:5};
+  if(col.date < 0 || col.amt < 0 || col.type < 0) return result;
+
+  // multiset of what already exists, so re-importing the same file adds nothing
+  const existing = {};
+  state.entries.forEach(e => {
+    const k = csvEntryKey(e.ts, e.type, e.category, e.amount, e.note);
+    existing[k] = (existing[k] || 0) + 1;
+  });
+
+  rows.slice(hasHeader ? 1 : 0).forEach(r => {
+    result.total++;
+    const get = i => (i >= 0 && i < r.length ? r[i].trim() : '');
+    const dm = get(col.date).match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
+    const tm = (get(col.time) || '00:00').match(/^(\d{1,2}):(\d{2})/);
+    const typeStr = get(col.type);
+    const type = typeStr === '支出' ? 'expense' : typeStr === '收入' ? 'income' : (typeStr === '無消費' || typeStr === '打卡') ? 'checkin' : null;
+    const amount = parseFloat(get(col.amt).replace(/[,\s]/g, ''));
+    if(!dm || !tm || !type || isNaN(amount) || (type !== 'checkin' && amount <= 0)){ result.invalid++; return; }
+
+    const y = +dm[1], m = +dm[2], d = +dm[3], hh = +tm[1], mm = +tm[2];
+    const dt = new Date(y, m - 1, d, hh, mm, 0, 0);
+    if(dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d || hh > 23 || mm > 59){ result.invalid++; return; }
+
+    const cat = csvCategoryKey(type, get(col.cat));
+    let note = get(col.note).slice(0, 24);
+    if(!cat.known && !note) note = get(col.cat).slice(0, 24);   // keep the unknown category name as a note
+    if(!cat.known) result.remapped++;
+
+    const ts = dt.getTime();
+    const amt = type === 'checkin' ? 0 : Math.round(amount * 100) / 100;
+    const k = csvEntryKey(ts, type, cat.key, amt, note);
+    if(existing[k] > 0){ existing[k]--; result.dup++; return; }
+    result.toAdd.push({
+      id: Date.now() + '_' + Math.random().toString(36).slice(2, 9) + result.toAdd.length,
+      amount: amt, type, category: cat.key, note, ts,
+    });
+  });
+  return result;
+}
+
+function onCsvFileChosen(input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => { handleImportText(String(reader.result || '')); input.value = ''; };
+  reader.onerror = () => { showToast('讀取檔案失敗'); input.value = ''; };
+  reader.readAsText(file, 'utf-8');
+}
+
+function handleImportText(text){
+  const res = analyzeCSV(text);
+  if(!res.total){
+    showToast('這個檔案裡找不到可以匯入的紀錄');
+    return;
+  }
+  if(!res.toAdd.length){
+    showToast(res.dup ? `這 ${res.dup} 筆都已經在了，沒有新紀錄` : '沒有可以匯入的紀錄，請確認是從這個 App 匯出的 CSV');
+    return;
+  }
+  state.importPending = res;
+  state.modal = {mode:'import', catKey:null};
+  const lines = [`找到 ${res.total} 筆紀錄`, `✅ 新增 ${res.toAdd.length} 筆`];
+  if(res.dup) lines.push(`⏭ 已存在，會略過 ${res.dup} 筆`);
+  if(res.invalid) lines.push(`⚠️ 無法辨識，會略過 ${res.invalid} 筆`);
+  if(res.remapped) lines.push(`ℹ️ ${res.remapped} 筆的分類不認識，已歸到「其他」`);
+  document.getElementById('modalTitle').textContent = '匯入 CSV';
+  const sub = document.getElementById('modalSub');
+  sub.textContent = lines.join('\n');
+  sub.style.whiteSpace = 'pre-line';
+  document.getElementById('modalInput').style.display = 'none';
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function applyImport(res){
+  if(!res || !res.toAdd.length) return;
+  state.entries.push(...res.toAdd);
+  state.entries.sort((a, b) => b.ts - a.ts);
+  persistEntries();
+  renderAll();
+  showToast(`已匯入 ${res.toAdd.length} 筆紀錄`);
+  dogHop();
+  dogSay('資料回來囉 🐾', 1800);
 }
 
 /* ---------- CSV export ---------- */
